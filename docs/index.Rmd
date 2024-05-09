@@ -10,7 +10,18 @@ output:
     code_folding: show
 ---
 
+# Introduction
+
 This workshop will provide you with an introduction to manipulating raster spatial data using the R package `terra`. `terra` and its predecessor, `raster` are widely used for spatial data manipulation in R. No prior experience of spatial data is assumed, but this short workshop will not have time to delve into some important aspects of spatial data such as projections. 
+
+We will cover:
+
+- What is a raster?
+- Creating and loading rasters in `terra`
+- Cropping and masking rasters
+- Exploring raster values, including simple statistical summaries and some raster math
+- Projecting 
+- Multi-layer rasters
 
 `terra`'s predecessor `raster` had many of the same functions as `terra`, and I will mention how functions have changed or been renamed which might be helpful for people migrating from using `raster`. In the words of the creator of both packages: `terra` is simpler, faster and can do more, so definitely switch to `terra` if you are still using `raster`!
 
@@ -30,6 +41,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
 
 ## Prerequisites 
 
@@ -407,60 +419,6 @@ sst_fahrenheit <- (sst_cropped_masked*1.8) + 32
 plot(sst_fahrenheit)
 ```
 
-
-## Nice maps
-
-Lets also make the map a bit prettier, choosing more appropriate colours and adding a scale bar. There are huge number of options for plotting, see the help file `?help` for details. There are many great plotting packages such as `tmap` and `ggplot` that can be used to make maps, but I will not cover those here. The [Geocomputation with R](https://r.geocompx.org/adv-map) website is an excellent resource on map making and geospatial data in R in general. 
-
-```{r}
-plot(sst_fahrenheit, col = hcl.colors(50, palette = "RdYlBu", rev = TRUE), las = 1) #see ?hcl.colors for more info on colour palettes. rev= TRUE because we want to reverse the palette: red colours are the highest values and blue the lowest
-lines(gbr_boundary)
-sbar(d = 400, type = "bar", divs = 2, below = "km") #400km scale bar with 2 divisions and "km" written below
-```
-
-<details>
-<summary>Click to see a range of colour palettes</summary>
-
-The swatches below show all the colour scales available via `hcl.colors()`. The code is directly from `?hcl.colors()`. 
-```{r class.source='fold-hide'}
-## color swatches for HCL palettes
-hcl.swatch <- function(type = NULL, n = 5, nrow = 11,
-  border = if (n < 15) "black" else NA) {
-    palette <- hcl.pals(type)
-    cols <- sapply(palette, hcl.colors, n = n)
-    ncol <- ncol(cols)
-    nswatch <- min(ncol, nrow)
-
-    par(mar = rep(0.1, 4),
-        mfrow = c(1, min(5, ceiling(ncol/nrow))),
-        pin = c(1, 0.5 * nswatch),
-        cex = 0.7)
-
-    while (length(palette)) {
-        subset <- 1:min(nrow, ncol(cols))
-        plot.new()
-        plot.window(c(0, n), c(0, nrow + 1))
-        text(0, rev(subset) + 0.1, palette[subset], adj = c(0, 0))
-        y <- rep(subset, each = n)
-        rect(rep(0:(n-1), n), rev(y), rep(1:n, n), rev(y) - 0.5,
-             col = cols[, subset], border = border)
-        palette <- palette[-subset]
-        cols <- cols[, -subset, drop = FALSE]
-    }
-
-    par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1), cex = 1)
-}
-```
-
-```{r fig.width=8, fig.height=6}
-hcl.swatch("qualitative")
-hcl.swatch("sequential")
-hcl.swatch("diverging")
-hcl.swatch("divergingx")
-```
-
-</details>
-
 ## Projecting rasters
 
 So far, our data have been in the same coordinate reference system (crs), but we often have to deal with spatial data that have different crs's. But first, what is a crs? The following section provides a brief summary with links to further reading.
@@ -517,7 +475,16 @@ zones <- vect("../data/gbr_habitat_protection_zones.gpkg")
 zones
 ```
 
-We can see the crs (coord. ref.) is GDA94 / Australian Albers (EPSG:3577). Lets get some more detail using the `crs()` function which queries the crs:
+We can see the crs (coord. ref.) is GDA94 / Australian Albers (EPSG:3577). Out of interest, let's see what happens if we try and plot the raster data and this new data:
+
+```{r}
+plot(sst_cropped_masked)
+lines(zones)
+```
+
+We see our raster, but no zones data because the zones are in a different crs.
+
+Let's get some more detail about the zones crs using the `crs()` function which queries the crs:
 
 ```{r}
 crs(zones)
@@ -539,7 +506,7 @@ crs(sst_cropped_masked, describe = TRUE)
 
 The raster is in a crs with EPSG code 4326. This is widely used for global data, and is 'unprojected' data, measured in degrees longitude and latitude. 
 
-We want to get our rasters into the same crs. In this case we will project the raster into the local crs. Projecting can be done using `project()` and providing the data we want to project and a crs. In this case we can use the crs of the zones object, which we get using `crs(zones)`, but we could also just provide the EPSG code like this `project(sst_cropped_masked, "epsg:3577")`
+We want to get our rasters into the same crs. In this case we will project the raster into the local crs. Projecting can be done using `project()` and providing the data we want to project and a crs. In this case we can use the crs of the zones object, which we already know we can get using `crs(zones)`, but we could also just provide the EPSG code like this `project(sst_cropped_masked, "epsg:3577")`
 
 ::: {.rasterbox}
 `raster` users note: `project()` replaces `projectRaster()`
@@ -597,15 +564,19 @@ Let's take a look at some different methods of projection and the impact it has 
 ```{r class.source='fold-hide'}
 proj_moll <- "ESRI:54009"
 
-polys <- ras |>
+ras2 <- rast(xmin = 0, xmax = 1, ymin = 0, ymax = 1, res = 1/3) 
+
+values(ras2) <- 1:ncell(ras2)
+
+polys <- ras2 |>
   as.polygons(dissolve = F) |>
   project(proj_moll)
 
-ras_near <- project(ras, proj_moll, meth = "near")
-ras_bilinear <- project(ras, proj_moll)
-ras_average <- project(ras, proj_moll, method = "average")
+ras_near <- project(ras2, proj_moll, meth = "near")
+ras_bilinear <- project(ras2, proj_moll)
+ras_average <- project(ras2, proj_moll, method = "average")
 
-pal <- hcl.colors(n = ncell(ras_near), "RdYlGn")
+pal <- hcl.colors(n = 50, "RdYlGn")
 
 padding <- 0
 
@@ -614,7 +585,7 @@ plot(input_raster, type = "classes", col = pal, xlim = c(ext(input_polygon)$xmin
 }
 
 par(mfrow = c(2,2))
-plot(ras, main = "Original raster", col = pal)
+plot(ras2, main = "Original raster", col = pal)
 plot_func(ras_near, polys, "Nearest neighbour")
 plot_func(ras_bilinear, polys, "Bilinear interpolation")
 plot_func(ras_average, polys, "Area weighted mean")
@@ -624,56 +595,6 @@ par(mfrow = c(1,1))
 
 
 </details>
-
-## Extracting data
-
-We have been looking at data within the Great Barrier Reef Marine Park boundary. What if we want to extract data for several smaller areas within that area? For example we might want to know the average temperature within habitat protection zones we loaded. We could crop and mask our data for each of our zones, but this could get messy if we have a lot of zones. Happily there is an easier way.
-
-First lets plot of zones data to see what it looks like. There are lots of columns in the data, but lets use the "PERMIT_DESC" column, which is the zone location, to map them since it has distinct and interesting descriptions for them.
-
-```{r}
-#plot the zones with our temperature data
-plot(zones, "PERMIT_DESC")
-```
-
-Lets plot these zones over our temperature data for context.
-
-```{r}
-plot(sst_cropped_masked_projected)
-lines(zones)
-```
-
-Now, lets find the average temperature of the raster cells within our zones. We can use a function called `zonal()` and just give it our raster, followed by our zones polygons, and tell it we want the mean value.
-
-```{r}
-zonal(sst_cropped_masked_projected, zones, fun = "mean")
-```
-
-Each row shows the mean temperature for a polygon, in the same order as our `zones` object. The northern zone has the highest temperature because it is nearer the equator.
-
-We can get other summary values, for example the maximum temperature in our zones:
-
-```{r}
-zonal(sst_cropped_masked_projected, zones, fun = "max")
-```
-
-You can get use other functions, such as min", sum", "isNA", and "notNA", and you can also use your own function. See `?zonal` for more details.
-
-We might also want to get all the raster values in our zones. We can do this using the `extract` function:
-
-```{r}
-zones_data_df <- extract(sst_cropped_masked_projected, zones) #the raster we are extracting from first, the polygons we want data for is second
-
-head(zones_data_df)
-```
-
-We get a data frame with where each row has the value of raser cell in our zones, and the column `ID` is used to identify each zone; 1 and 2 in our case.
-
-Now we have a data frame of values we can, for example, do a boxplot of temperatures in each zone. I use the base R function here, but you can of course use `ggplot` or any other package you like.
-
-```{r}
-boxplot(CRW_SST_2 ~ ID, zones_data_df) 
-```
 
 ## Rasterlayers
 
@@ -726,7 +647,7 @@ plot(sst_monthly_cropped_masked[[1:4]], fun = function()lines(zones_projected))
 ```
 
 
-Now everything is in the same projection, we can get the monthy temperature in each of our zones:
+Now everything is in the same projection, we can get the monthly temperature in each of our zones. There is a function called `zonal` that provides us with summary statistics for any "zones" that we provide; in our case the two habitat protection zones. The default statistic that is returned in the mean value of raster cells in each zone, but you can get other values using the `fun = ` argument, e.g. `zonal(sst_monthly, zones_projected, fun = "sum")`. See `?zonal` for more details.
 
 ```{r}
 zones_mean_temp <- zonal(sst_monthly, zones_projected)
@@ -759,3 +680,57 @@ plot(zones_mean_temp_t$ym, zones_mean_temp_t$V1, type = "l",
 lines(zones_mean_temp_t$ym, zones_mean_temp_t$V2, type = "l", col = "blue")
 ```
 
+## Nice maps
+
+Everyone likes a nice map. So far we have just used created fairly basic maps using the `plot` function in `terra`. There are many great plotting packages such as `tmap` and `ggplot` that can be used to make maps, but we are not going to cover those here. The [Geocomputation with R](https://r.geocompx.org/adv-map) website is an excellent resource on map making and geospatial data in R in general. 
+
+Let's just make a prettier map of our sea surface temperature raster data, using a more appropriate colour scheme and adding a scalebar. There are huge number of options for plotting, see the help file `?plot` for details - make sure you chose the help file for `terra`! 
+
+```{r}
+plot(sst_cropped_masked, col = hcl.colors(50, palette = "RdYlBu", rev = TRUE), las = 1) #see ?hcl.colors for more info on colour palettes. rev= TRUE because we want to reverse the palette: red colours are the highest values and blue the lowest
+lines(gbr_boundary)
+sbar(d = 400, type = "bar", divs = 2, below = "km") #400km scale bar with 2 divisions and "km" written below
+```
+
+<details>
+<summary>Click to see a range of colour palettes</summary>
+
+The swatches below show all the colour scales available via `hcl.colors()`. The code is directly from `?hcl.colors()`. 
+```{r class.source='fold-hide'}
+## color swatches for HCL palettes
+hcl.swatch <- function(type = NULL, n = 5, nrow = 11,
+  border = if (n < 15) "black" else NA) {
+    palette <- hcl.pals(type)
+    cols <- sapply(palette, hcl.colors, n = n)
+    ncol <- ncol(cols)
+    nswatch <- min(ncol, nrow)
+
+    par(mar = rep(0.1, 4),
+        mfrow = c(1, min(5, ceiling(ncol/nrow))),
+        pin = c(1, 0.5 * nswatch),
+        cex = 0.7)
+
+    while (length(palette)) {
+        subset <- 1:min(nrow, ncol(cols))
+        plot.new()
+        plot.window(c(0, n), c(0, nrow + 1))
+        text(0, rev(subset) + 0.1, palette[subset], adj = c(0, 0))
+        y <- rep(subset, each = n)
+        rect(rep(0:(n-1), n), rev(y), rep(1:n, n), rev(y) - 0.5,
+             col = cols[, subset], border = border)
+        palette <- palette[-subset]
+        cols <- cols[, -subset, drop = FALSE]
+    }
+
+    par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1), cex = 1)
+}
+```
+
+```{r fig.width=8, fig.height=6}
+hcl.swatch("qualitative")
+hcl.swatch("sequential")
+hcl.swatch("diverging")
+hcl.swatch("divergingx")
+```
+
+</details>

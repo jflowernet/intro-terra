@@ -606,7 +606,11 @@ sst_monthly <- rast("../data/gbr_monthly_temp.tif")
 sst_monthly
 ```
 
-We can that the raster has `r nlyr(sst_monthly)` layers. Lets plot it to see what we get.
+::: {.rasterbox}
+`raster` users note: there is no need for `stack()` anymore. You can load multi-layer rasters (previously called `RasterStack`) using `rast()` and create multi-layer rasters using `c()`, e.g. `c(first_raster_layer, second_raster_layer)`.
+:::
+
+We can see that the raster has `r nlyr(sst_monthly)` layers. Lets plot it to see what we get.
 
 ```{r}
 plot(sst_monthly)
@@ -692,10 +696,17 @@ lines(gbr_boundary)
 sbar(d = 400, type = "bar", divs = 2, below = "km") #400km scale bar with 2 divisions and "km" written below
 ```
 
+If you have the `leaflet` package installed (you need version > 2.1.1), then you can create interactive maps just by using `plet()` rather than `plot()`:
+
+```{r}
+plet(sst_cropped_masked, col = hcl.colors(50, palette = "RdYlBu", rev = TRUE), tiles = "Streets")
+```
+
 <details>
 <summary>Click to see a range of colour palettes</summary>
 
 The swatches below show all the colour scales available via `hcl.colors()`. The code is directly from `?hcl.colors()`. 
+
 ```{r class.source='fold-hide'}
 ## color swatches for HCL palettes
 hcl.swatch <- function(type = NULL, n = 5, nrow = 11,

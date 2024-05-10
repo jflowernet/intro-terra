@@ -98,7 +98,7 @@ elev |>
 
 # Getting started
 
-Lets start by creating our own raster. We can create rasters from scratch and load them from a file using the function `rast()`. We can create a simple raster by specifying the x and y limits for the raster and the resolution (how big each cell is).
+Let's start by creating our own raster. We can create rasters from scratch and load them from a file using the function `rast()`. We can create a simple raster by specifying the x and y limits for the raster and the resolution (how big each cell is).
 
 ::: {.rasterbox}
 `raster` users note: `rast()` replaces `raster()`
@@ -126,19 +126,19 @@ The figure below shows what most of the terms above refer to. As you can see, yo
 knitr::include_graphics("../figs/terra_raster_properties_figure.png")
 ```
 
-But what does the raster we created actually look like when plotted. Lets see. All we need is `plot()`
+But what does the raster we created actually look like when plotted. Let's see. All we need is `plot()`
 
 ```{r, out.width=3}
 plot(ras)
 ```
 
-Why is there no plot? Because the raster we created is empty; there are no values associated with the the cells. Lets assign some values to each cell in the raster and try again. First we will find out how many cells are in our raster using `ncell()
+Why is there no plot? Because the raster we created is empty; there are no values associated with the the cells. Let's assign some values to each cell in the raster and try again. First we will find out how many cells are in our raster using `ncell()
 
 ```{r}
 ncell(ras)
 ```
 
-Ok, now we know this lets give our raster cells values from 1 to `r ncell(ras)`:
+Ok, now we know this, we can give our raster cells values from 1 to `r ncell(ras)`:
 
 ```{r}
 values(ras) <- 1:25
@@ -148,7 +148,7 @@ plot(ras)
 
 Now our raster has values, we get a plot! Each cell has an integer value between 1 and 25, with cell values increasing from left to right and top to bottom. So the values start being "filled up" in the top left, and finish in the bottom right.
 
-Lets have another look at our raster properties
+Let's have another look at our raster properties
 
 ```{r}
 ras
@@ -160,7 +160,7 @@ We can now see a few extra pieces of information compared to last time:
 - `name`: what is the raster called?
 - `min value` & `max value`: the minimum and maximum values in the raster
 
-Ok, now we understand the basic structure of a raster, lets load some data.
+Ok, now we understand the basic structure of a raster, let's load some data.
 
 # Exploring some real world data
 
@@ -182,7 +182,7 @@ If the data loaded correctly, you should see the properties as shown above. We h
 
 - the coordinate reference system (crs) is in lon/ lat, which means the unit of measurement is degrees. So the extent coordinates are in degrees, i.e. xmin = `r sprintf("%1.0f", as.numeric(ext(sst)$xmin))`$^\circ$, xmax = `r sprintf("%0.2f", as.numeric(ext(sst)$xmax))`$^\circ$, ymin = `r sprintf("%0.2f", as.numeric(ext(sst)$ymin))`$^\circ$ and ymax =  `r sprintf("%0.2f", as.numeric(ext(sst)$xmax))`$^\circ$, and resolution is also in degrees, i.e `r sprintf("%0.2f", res(sst)[1])`$^\circ$.
 - the `source` is the filename of the data we loaded. This means it is on disk, not in memory. We can double check by running `inMemory(sst)` which should return `r inMemory(sst)`.
-- `unit` is Celsius. Most rasters don't come with the units, so you will normally need to look at metadata to find this information.
+- `unit` is Celsius. Most rasters don't come with the units, so you will normally need to look at external metadata to find this information.
 
 ## Plot the data
 
@@ -205,7 +205,7 @@ plot(sst, colNA = "black")
 Note that every cell within our raster has to have a value. 
 
 ## Load and plot some vector data
-To put our raster data in context, lets plot the Great Barrier Reef Marine Park boundary (dowloaded from [here](https://geohub-gbrmpa.hub.arcgis.com/datasets/bac38dff14ae4ff9a1c9de5d234e26f8_30/explore)). This is vector data. You might be used to handling vector data with the `sf` package, but `terra` can also be used for vector data manipulation. We can load a vector using `vect()`
+To put our raster data in context, let's plot the Great Barrier Reef Marine Park boundary (dowloaded from [here](https://geohub-gbrmpa.hub.arcgis.com/datasets/bac38dff14ae4ff9a1c9de5d234e26f8_30/explore)). This is vector data. You might be used to handling vector data with the `sf` package, but `terra` can also be used for vector data manipulation. We can load a vector using `vect()`
 
 ::: {.rasterbox}
 `raster` users note: `terra` has its own methods for handling vector data unlike `raster` which used the `sp` package for vector data handling. Vector data in `terra` are `SpatVector` objects; different from `sf` objects.
@@ -228,17 +228,18 @@ We now see the outline of the Great Barrier Reef marine park on top of the sea s
 
 ## Crop and mask data
 
-The data we have at the moment is for a much larger area than just the Great Barrier Reef marine park. To get only that data we need to crop and mask the raster data using the marine park boundary.
+The data we have at the moment is for a much larger area than just the Great Barrier Reef marine park. To get only SST data for the marine park, we need to crop and mask the raster data using the marine park boundary.
 
-Cropping means that we keep only the data inside the **extent** of the vector we are using. Mask means that all the data outside the vector is set to NA or some other value we specify. Lets have a look how this works.
+Cropping means that we keep only the data inside the **extent** of the vector we are using. Mask means that all the data outside the vector is set to NA or some other value we specify. Let's have a look how this works.
 
-First lets have a look at the extent of the marine park boundary. We can get the extent of a raster or vector using `ext()`. We need to convert this into a `SpatVector` object for plotting using `vect()`. We only need to do this for plotting; when we crop, we can just use the marine park boundary as the input.
+First let's have a look at the extent of the marine park boundary. We can get the extent of a raster or vector using `ext()`. We need to convert this into a `SpatVector` object for plotting using `vect()`. We only need to do this for plotting; when we crop, we can just use the marine park boundary as the input.
 
 ::: {.rasterbox}
 `raster` users note: `ext()` replaces `extent()`
 :::
 
 ```{r fig.cap="Cropping means we remove everything outside the extent (blue box) of our polygon. Masking sets all values outside our polygon to NA."}
+#get the marine park boundary extent and convert it into a SpatVector so we can plot it
 gbr_boundary_extent <- ext(gbr_boundary) |>
   vect()
 
@@ -313,7 +314,7 @@ hist(sst_cropped_masked)
 
 The x-axis is in the units of our raster values; temperature in degrees Celsius in our case. The y-axis is frequency; how many cells in our raster have those values.
 
-You can change the histogram using the same arguments you use with `hist()` in base R. For example, lets increase the number of bars we have:
+You can change the histogram using the same arguments you use with `hist()` in base R. For example, let's increase the number of bars we have:
 
 ```{r}
 hist(sst_cropped_masked, breaks = 100)
@@ -348,7 +349,7 @@ We can use the same `summary()` command that is used in base R to get a summary 
 summary(sst_cropped_masked)
 ```
 
-These values are, for example, the mean value of all raster values excluding `NA`s.
+The statistics are for all raster values excluding `NA`s, e.g. the mean of all raster values excluding `NA` values.
 
 To get individual statistical values, we need to use `global()`. For example to get the mean value of a raster:
 
@@ -407,9 +408,9 @@ plot(sst_reclassed, col = c("blue", "red"), plg = list(legend = c("Cooler", "War
 
 ### Raster math
 
-The great thing about rasters are you can do maths with them! For example, doing `sst_reclassed + 1` just adds one to each raster value, and doing `sst_reclassed*2` multiplies each raster value by two.
+The great thing about rasters is that you can do maths with them! For example, doing `sst_reclassed + 1` just adds one to each raster value, and doing `sst_reclassed*2` multiplies each raster value by two.
 
-As an example, lets convert our temperature data into Fahrenheit for our confused colleagues in the U.S. The conversion from Celsius to Fahrenheit is: Fahrenheit = (Celsius * 1.8) + 32.
+As an example, let's convert our temperature data into Fahrenheit for our confused colleagues in the U.S. The conversion from Celsius to Fahrenheit is: Fahrenheit = (Celsius * 1.8) + 32.
 
 ```{r}
 #do the conversion
@@ -445,7 +446,7 @@ knitr::include_graphics("../figs/datums.png")
 
 A commonly used geocentric datum is World Geodetic Survey for 1984 (WGS84). This is almost synonymous with the commonly used coordinate reference system EPSG 4326, but EPSG 4326 defines the latitude and longitude coordinates used on the WGS84 ellipsoid ([Ref](https://gis.stackexchange.com/questions/3334/difference-between-wgs84-and-epsg4326))
 
-- Projected coordinate system (projection): Unfortunately, we can't carry around globes all the time when we want to look at a map, and doing calculations, such as distance and area, in 3-D is much more difficult than 2-D. So we need a way of representing of getting from our 3-D globe to a piece of paper (or for younger people, a screen). To do this we need to 'project' from a GCS to a projected coordinate system, which is called projection because we can think of this as putting a light in the center of a globe and the light shines through the globe projecting features onto a flat piece of paper. The figure below (from [QGIS docs](https://docs.qgis.org/3.34/en/docs/gentle_gis_introduction/coordinate_reference_systems.html)) illustrates this, showing the 3 projection families:
+- Projected coordinate system (projection): Unfortunately, we can't carry around globes all the time when we want to look at a map, and doing calculations, such as distance and area, in 3-D is much more difficult than 2-D. So we need a way of getting from our 3-D globe to a piece of paper (or for younger people, a screen). To do this we need to 'project' from a GCS to a projected coordinate system, which is called projection because we can think of this as putting a light in the center of a globe and the light shines through the globe projecting features onto a piece of paper. The figure below (from [QGIS docs](https://docs.qgis.org/3.34/en/docs/gentle_gis_introduction/coordinate_reference_systems.html)) illustrates this, showing the 3 projection families:
 
 ```{r echo=FALSE, fig.cap="a) Cylindrical; b) conical, and; c) planar projecions"}
 knitr::include_graphics("../figs/projections_qgis_docs.png")
@@ -465,7 +466,7 @@ We have only covered the basics of coordinate reference systems because it is a 
 
 ## Projecting rasters (continued)
 
-First lets load some geospatial data that is in a different projection from the data we have been using so far. This is vector data for two marine protected areas (habitat protection zones) in the Great Barrief Reef marine park. This is just a small part of the [Great Barrier Reef Marine Park zoning map](https://geohub-gbrmpa.hub.arcgis.com/datasets/GBRMPA::great-barrier-reef-marine-park-zoning-/explore). Surprisingly, habitat protection zones allow all types of fishing except trawling. You can view more details about the zones and the activities that are allowed [here](https://www2.gbrmpa.gov.au/access/zoning/interpreting-zones).
+First let's load some geospatial data that is in a different projection from the data we have been using so far. This is vector data for two marine protected areas (habitat protection zones) in the Great Barrief Reef marine park. This is just a small part of the [Great Barrier Reef Marine Park zoning map](https://geohub-gbrmpa.hub.arcgis.com/datasets/GBRMPA::great-barrier-reef-marine-park-zoning-/explore). Surprisingly, habitat protection zones allow all types of fishing except trawling. You can view more details about the zones and the activities that are allowed [here](https://www2.gbrmpa.gov.au/access/zoning/interpreting-zones).
 
 ```{r}
 #load the zones data
@@ -484,7 +485,7 @@ lines(zones)
 
 We see our raster, but no zones data because the zones are in a different crs.
 
-Let's get some more detail about the zones crs using the `crs()` function which queries the crs:
+Let's get some more detail about the zones crs using the `crs()` function:
 
 ```{r}
 crs(zones)
@@ -506,7 +507,7 @@ crs(sst_cropped_masked, describe = TRUE)
 
 The raster is in a crs with EPSG code 4326. This is widely used for global data, and is 'unprojected' data, measured in degrees longitude and latitude. 
 
-We want to get our rasters into the same crs. In this case we will project the raster into the local crs. Projecting can be done using `project()` and providing the data we want to project and a crs. In this case we can use the crs of the zones object, which we already know we can get using `crs(zones)`, but we could also just provide the EPSG code like this `project(sst_cropped_masked, "epsg:3577")`
+We want to get our rasters into the same crs. In this case we will project the raster into the local crs. Projecting can be done using `project()` and providing the data we want to project and a crs. In this case we can use the crs of the zones object, which we already know we can get using `crs(zones)`, but we could also just provide the EPSG code:
 
 ::: {.rasterbox}
 `raster` users note: `project()` replaces `projectRaster()`
@@ -514,11 +515,14 @@ We want to get our rasters into the same crs. In this case we will project the r
 
 ```{r}
 sst_cropped_masked_projected <- project(sst_cropped_masked, crs(zones))
+
+#as an alternative, we can use the EPSG that we went to project into like this:
+#project(sst_cropped_masked, "epsg:3577")
 ```
 
-It is really important to understand that when we project a raster, we are changing the raster, because we have to create a new raster in the new crs. 
+It is really important to understand that when we project a raster, we create a new raster in the crs we are projecting into.  
 
-Lets compare our original raster and the projected version:
+Let's compare our original raster and the projected version:
 
 ```{r}
 sst_cropped_masked
@@ -528,9 +532,9 @@ sst_cropped_masked
 sst_cropped_masked_projected
 ```
 
-We can see that the projected raster is in the Australian Albers crs, and the extent, resolution, and dimensions have all changed. This crs has units of meters, which means the size of each raser cells is `r res(sst_cropped_masked_projected)[1]`m x `r res(sst_cropped_masked_projected)[2]`m. 
+We can see that the projected raster is in the Australian Albers crs, and the extent, resolution, and dimensions have all changed. This crs has units of meters, which means the size of each raser cells is `r sprintf("%1.0f", res(sst_cropped_masked_projected)[1])`m x `r sprintf("%1.0f", res(sst_cropped_masked_projected)[2])`m. 
 
-Lets compare how the two rasters now look.
+Let's compare how the two rasters now look.
 
 ```{r}
 par(mfrow = c(1,2)) #so we get plots beside each other: 1 row, 2 columns
@@ -542,7 +546,7 @@ par(mfrow = c(1,1)) #revert back to one plot per row
 
 The maps look very similar, but we can see that the shape is changed and the axes are now in different units, reflecting the projection.
 
-Lets have a look at a summary of the values for each raster.
+Let's have a look at a summary of the values for each raster.
 
 ```{r}
 summary(sst_cropped_masked)
@@ -552,14 +556,14 @@ summary(sst_cropped_masked)
 summary(sst_cropped_masked_projected)
 ```
 
-The statistics are similar, but not exactly the same. There are also a lot more NA values in the projected raster, largely because there are more cells: `r format(ncell(sst_cropped_masked), scientific = F)` in the original and `r format(ncell(sst_cropped_masked_projected), scientific = F)` in the projected raster.
+The statistics are similar, but not exactly the same. There are also a lot more `NA` values in the projected raster, largely because there are more cells: `r format(ncell(sst_cropped_masked), scientific = F)` in the original and `r format(ncell(sst_cropped_masked_projected), scientific = F)` in the projected raster.
 
-These changes in the raster are really important to think about when making decisions about projecting rasters. 
+These changes in the raster are really important to think about when making decisions about projecting rasters. You should ideally project rasters as little as possible. It is normally better to project vector data into the same crs as a raster since vector can be transformed without loss of precision, but this will depend on the requirements of your project.
 
 <details>
-<summary>More details on projection</summary>
+<summary>Click here for more details on projecting rasters</summary>
 
-Let's take a look at some different methods of projection and the impact it has on the raster values. The red lined grid is the original raster grid in vector format projected.
+Let's take a look at some different methods that can be used to estimate cell values when projecting a raster. We will start with a simple 3x3 raster and project it into Molleweide. The red lined grid in the maps is the original raster grid in vector format projected, and there are maps of the original raster projected using 3 common methods to obtain the new cells values: nearest neighbour, bilinear weighted mean, and area weighted average. Each method gives slightly different values.
 
 ```{r class.source='fold-hide'}
 proj_moll <- "ESRI:54009"
@@ -593,12 +597,15 @@ plot_func(ras_average, polys, "Area weighted mean")
 par(mfrow = c(1,1))
 ```
 
+`terra` defaults to using bilinear interpolation for continuous values. For categorical values it uses the nearest neighbour method because this avoids the resulting raster ending up with values that were not in the original. Other projection methods available are detailed in the help file `?project`.
+
+If you want to know why the projected rasters don't align with the projected vector grid see [this Q&A on Stackoverflow](https://stackoverflow.com/questions/78440026/how-does-the-r-package-terra-decide-on-the-template-raster-properties-when-pro)
 
 </details>
 
 ## Rasterlayers
 
-A very useful feature of rasters is that they can have many layers. These layers often represent different time periods, such as days or months. Lets look at a multi-layer raster which has the same temperature data that we have been looking at, but each layer represents the mean temperature in a month. We load the multi-layer raster in the same way as any other raster, using `rast()`:
+A very useful feature of rasters is that they can have many layers. These layers often represent different time periods, such as days or months. Let's look at a multi-layer raster which has similar sea surface temperature data to that which we have been looking at, but each layer represents the mean temperature in a month. We load the multi-layer raster in the same way as any other raster, using `rast()`:
 
 ```{r}
 sst_monthly <- rast("../data/gbr_monthly_temp.tif")
@@ -610,13 +617,13 @@ sst_monthly
 `raster` users note: there is no need for `stack()` anymore. You can load multi-layer rasters (previously called `RasterStack`) using `rast()` and create multi-layer rasters using `c()`, e.g. `c(first_raster_layer, second_raster_layer)`.
 :::
 
-We can see that the raster has `r nlyr(sst_monthly)` layers. Lets plot it to see what we get.
+We can see that the raster has `r nlyr(sst_monthly)` layers. Let's plot it to see what we get.
 
 ```{r}
 plot(sst_monthly)
 ```
 
-We get one map for each raster layer, but not all the data because you wouldn't be able to see the maps if they were much smaller. We can plot a specific subset of the data using double square brackets `[[]]` to select a set of layers. For example, if we wanted the last 4 layers in the raster, which are layers 33 to 36:
+We get one map for each raster layer, but not all the data, because you wouldn't be able to see the maps if they were much smaller. We can plot a specific subset of the data using double square brackets `[[]]` to select a set of layers. For example, if we wanted the last 4 layers in the raster, which are layers 33 to 36:
 
 ```{r}
 plot(sst_monthly[[33:36]])
@@ -638,7 +645,17 @@ sst_monthly_cropped_masked <- crop(sst_monthly, gbr_boundary, mask = TRUE)
 plot(sst_monthly_cropped_masked)
 ```
 
-We can get data for our zones like we did before, but first we need to project our data, since the raster layers are in a different projection to the zones. Lets project our zones into the same crs as our raster, this way we do not change our raster data.
+## Zonal statistics
+
+We might want to get data for certain areas of our raster, for example the 2 habitat protection zones we loaded earlier.
+
+Let's remind ourselves what these look like.
+
+```{r}
+plot(zones)
+```
+
+Remember, the zones are in a different crs to our SST data. We will project the zones into the same crs as our raster, this way we do not change our raster data values.
 
 ```{r}
 zones_projected <- project(zones, crs(sst_monthly))
@@ -651,7 +668,7 @@ plot(sst_monthly_cropped_masked[[1:4]], fun = function()lines(zones_projected))
 ```
 
 
-Now everything is in the same projection, we can get the monthly temperature in each of our zones. There is a function called `zonal` that provides us with summary statistics for any "zones" that we provide; in our case the two habitat protection zones. The default statistic that is returned in the mean value of raster cells in each zone, but you can get other values using the `fun = ` argument, e.g. `zonal(sst_monthly, zones_projected, fun = "sum")`. See `?zonal` for more details.
+Now everything is in the same projection, we can get the monthly temperature in each of our zones. There is a function called `zonal` that provides us with summary statistics for any "zones" that we provide; in our case the two habitat protection zones. The default statistic that is returned is the mean value of raster cells in each zone, but you can get other statistics using the `fun = ` argument, e.g. `zonal(sst_monthly, zones_projected, fun = "sum")`. See `?zonal` for more details.
 
 ```{r}
 zones_mean_temp <- zonal(sst_monthly, zones_projected)
@@ -686,9 +703,9 @@ lines(zones_mean_temp_t$ym, zones_mean_temp_t$V2, type = "l", col = "blue")
 
 ## Nice maps
 
-Everyone likes a nice map. So far we have just used created fairly basic maps using the `plot` function in `terra`. There are many great plotting packages such as `tmap` and `ggplot` that can be used to make maps, but we are not going to cover those here. The [Geocomputation with R](https://r.geocompx.org/adv-map) website is an excellent resource on map making and geospatial data in R in general. 
+Everyone likes a nice map. So far we have just created fairly basic maps using the `plot` function in `terra`. There are many great plotting packages such as `tmap` and `ggplot` that can be used to make maps, but we are not going to cover those here. The [Geocomputation with R](https://r.geocompx.org/adv-map) website is an excellent resource on map making and geospatial data in R in general. 
 
-Let's just make a prettier map of our sea surface temperature raster data, using a more appropriate colour scheme and adding a scalebar. There are huge number of options for plotting, see the help file `?plot` for details - make sure you chose the help file for `terra`! 
+We can make pretty good maps just using `terra` though! Here we will make a nicer map of our sea surface temperature raster data, using a more appropriate colour scheme and adding a scalebar. There are huge number of options for plotting, see the help file `?plot` for details - make sure you choose the help file for `terra`! 
 
 ```{r}
 plot(sst_cropped_masked, col = hcl.colors(50, palette = "RdYlBu", rev = TRUE), las = 1) #see ?hcl.colors for more info on colour palettes. rev= TRUE because we want to reverse the palette: red colours are the highest values and blue the lowest

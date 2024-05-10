@@ -13,4 +13,4 @@ You will also need to have the data within this repository. You can do one of th
 - [Fork this repository](https://github.com/jflowernet/intro-terra-ecodatascience/fork). This will create your own copy of this repository which has all the data and code. More details on how to fork [here](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
 - Download the data to somewhere on your computer that you will be able to access during the workshop. The data are in a zip file [here](https://github.com/jflowernet/intro-terra-ecodatascience/raw/main/data/data.zip). Once you have downloaded the data, unzip it, and make sure you know the path to the folder with all the data, e.g. "Documents/workshop_data/", so you can load the data during the workshop.
 
-The workshop website is shown on the right hand side of this page and can also be accessed [here](https://jflowernet.github.io/intro-terra-ecodatascience/)
+The workshop website link is on the right hand side of this page and can also be accessed [here](https://jflowernet.github.io/intro-terra-ecodatascience/)

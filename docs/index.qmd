@@ -565,7 +565,23 @@ plot(sst_cropped_masked_projected)
 par(mfrow = c(1,1)) #revert back to one plot per row
 ```
 
-The maps look very similar, but we can see that the shape is changed and the axes are now in different units, reflecting the projection.
+The maps look very similar, but we can see that the shape is changed and the axes are now in different units, reflecting the projection. 
+
+It's also interesting to see what happens if we convert the unprojected raster into polygons and then project it. To make the polygons easier to visualize I have aggregated them by a factor of 4 (made the raster cells lower resolution):
+
+```{r}
+#| code-fold: true
+
+plot(sst_cropped_masked_projected, grid = TRUE)
+sst_cropped_masked |> 
+  aggregate(fact = 4) |> 
+  as.polygons(na.rm = FALSE, aggregate = FALSE) |> 
+  project(crs(sst_cropped_masked_projected)) |> 
+  lines(lwd = 0.5, col = "grey40") 
+north(xy = "bottomright")
+```
+
+Each point of each polygon is transformed into the new projection, resulting in a grid that no longer aligns with straight north-south and east-west lines in the new projection. The polygon grid is also curved, and at the beginning of this tutorial we learnt that rasters have to be rectangles! This is why we have to create a new raster when we project rasters.
 
 Let's have a look at a summary of the values for each raster.
 
